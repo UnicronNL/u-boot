@@ -38,6 +38,20 @@ static int cl_eeprom_read(uint offset, uchar *buf, int len)
 	return res;
 }
 
+static int cl_igb_eeprom_read(uint offset, uchar *buf, int len)
+{
+        int res;
+        unsigned int current_i2c_bus = i2c_get_bus_num();
+
+        i2c_set_bus_num(CONFIG_SYS_I2C_IGB_EEPROM_BUS);
+        res = i2c_read(CONFIG_SYS_I2C_EEPROM_ADDR, offset,
+                        CONFIG_SYS_I2C_EEPROM_ADDR_LEN, buf, len);
+
+        i2c_set_bus_num(current_i2c_bus);
+
+        return res;
+}
+
 static int cl_eeprom_setup_layout(void)
 {
 	int res;
@@ -96,6 +110,20 @@ int cl_eeprom_read_mac_addr(uchar *buf)
 
 	return cl_eeprom_read(offset, buf, 6);
 }
+
+int cl_igb_eeprom_read_mac_addr(uchar *buf)
+{
+        uint offset;
+
+        if (cl_eeprom_setup_layout())
+                return 0;
+
+        offset = (cl_eeprom_layout != LAYOUT_LEGACY) ?
+                        MAC_ADDR_OFFSET : MAC_ADDR_OFFSET_LEGACY;
+
+        return cl_igb_eeprom_read(offset, buf, 6);
+}
+
 
 /*
  * Routine: cl_eeprom_get_board_rev

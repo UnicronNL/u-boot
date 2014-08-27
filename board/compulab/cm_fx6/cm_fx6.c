@@ -357,6 +357,25 @@ static int handle_mac_address(void)
 	return eth_setenv_enetaddr("ethaddr", enetaddr);
 }
 
+static int handle_igb_mac_address(void)
+{
+        unsigned char enetaddr[6];
+        int rc;
+
+        rc = eth_getenv_enetaddr("eth1addr", enetaddr);
+        if (rc)
+                return 0;
+
+        rc = cl_eeprom_read_mac_addr(enetaddr);
+        if (rc)
+                return rc;
+
+        if (!is_valid_ether_addr(enetaddr))
+                return -1;
+
+        return eth_setenv_enetaddr("eth1addr", enetaddr);
+}
+
 int board_eth_init(bd_t *bis)
 {
 	int res;
@@ -364,6 +383,10 @@ int board_eth_init(bd_t *bis)
 	res = handle_mac_address();
 	if (res)
 		puts("No MAC address found\n");
+
+	res = handle_igb_mac_address();
+        if (res)
+                puts("No MAC address found\n");
 
 	cm_fx6_set_enet_iomux();
 	/* phy reset */
@@ -456,6 +479,12 @@ void ft_board_setup(void *blob, bd_t *bd)
 		fdt_find_and_setprop(blob, "/fec", "local-mac-address",
 				     enetaddr, 6, 1);
 	}
+
+        /* MAC addr */
+        if (eth_getenv_enetaddr("eth1addr", enetaddr)) {
+                fdt_find_and_setprop(blob, "/eth@pcie", "local-mac-address",
+                                     enetaddr, 6, 1);
+        }
 }
 #endif
 
