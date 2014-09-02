@@ -366,7 +366,7 @@ static int handle_igb_mac_address(void)
         if (rc)
                 return 0;
 
-        rc = cl_eeprom_read_mac_addr(enetaddr);
+        rc = cl_igb_eeprom_read_mac_addr(enetaddr);
         if (rc)
                 return rc;
 
